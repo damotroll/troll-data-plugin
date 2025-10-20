@@ -423,48 +423,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     return filledCount;
   }
-      
-      if (!response || !response.fields || response.fields.length === 0) {
-        showStatus('No form fields found on this page', 'info');
-        statsDiv.textContent = 'No fillable forms detected';
-        return;
-      }
-      
-      showStatus(`Found ${response.fields.length} fields. Generating data...`, 'info');
-      statsDiv.textContent = `Processing ${response.fields.length} fields...`;
-      
-      // Send to background script to generate data
-      chrome.runtime.sendMessage({
-        action: 'generateData',
-        fields: response.fields,
-        context: response.context,
-        options: {
-          useRealistic: useRealisticCheckbox.checked,
-          smartContext: smartContextCheckbox.checked
-        }
-      }, (result) => {
-        if (result.error) {
-          showStatus(`Error: ${result.error}`, 'error');
-          statsDiv.textContent = 'Failed to generate data';
-          return;
-        }
-        
-        // Send generated data back to content script to fill forms
-        chrome.tabs.sendMessage(tab.id, {
-          action: 'fillForms',
-          data: result.data
-        }, (fillResponse) => {
-          if (fillResponse && fillResponse.success) {
-            showStatus('Forms filled successfully!', 'success');
-            statsDiv.textContent = `Filled ${fillResponse.filledCount} of ${response.fields.length} fields`;
-          } else {
-            showStatus('Error filling forms', 'error');
-          }
-        });
-      });
-    });
-  }
-  
+
   function showStatus(message, type) {
     statusDiv.textContent = message;
     statusDiv.className = `status ${type}`;
