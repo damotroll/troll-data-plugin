@@ -502,29 +502,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           if (selectedOption) {
             // Step 5: Click the option to select it
+            // MUI Autocomplete responds to mousedown + click
             selectedOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-            selectedOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
             selectedOption.click();
 
-            // Step 6: Close the dropdown properly
+            // Step 6: Wait for MUI to process the selection and close naturally
+            // Don't force close - let MUI handle it
             setTimeout(() => {
-              // Method 1: Press Escape to close dropdown
-              input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, bubbles: true }));
+              // Only close if dropdown is still open after selection
+              const isStillOpen = input.getAttribute('aria-expanded') === 'true';
 
-              // Method 2: Click the popup indicator button to close
-              const autocompleteContainer = input.closest('.MuiAutocomplete-root');
-              if (autocompleteContainer) {
-                const popupButton = autocompleteContainer.querySelector('.MuiAutocomplete-popupIndicator');
-                if (popupButton) {
-                  popupButton.click();
+              if (isStillOpen) {
+                // Gently close by clicking the popup button
+                const autocompleteContainer = input.closest('.MuiAutocomplete-root');
+                if (autocompleteContainer) {
+                  const popupButton = autocompleteContainer.querySelector('.MuiAutocomplete-popupIndicator');
+                  if (popupButton) {
+                    popupButton.click();
+                  }
                 }
               }
 
-              // Method 3: Blur the input
-              input.dispatchEvent(new Event('blur', { bubbles: true }));
-              input.blur();
-
-              // Verify and provide visual feedback
+              // Provide visual feedback after a bit more time
               setTimeout(() => {
                 if (input.value && input.value.trim() !== '') {
                   input.style.transition = 'background-color 0.3s';
@@ -533,12 +532,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     input.style.backgroundColor = '';
                   }, 1000);
                 }
-              }, 100);
-            }, 100);
+              }, 200);
+            }, 300); // Wait 300ms for MUI to process the selection
           }
         }
       }
-    }, 300); // Wait for dropdown to render
+    }, 400); // Wait 400ms for dropdown to render
   }
 
   function showStatus(message, type) {
