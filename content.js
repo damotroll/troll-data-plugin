@@ -322,6 +322,76 @@ function fillForms(data) {
     }
   });
 
+  // Handle MUI Autocomplete and similar input[role="combobox"] components
+  const autocompleteInputs = document.querySelectorAll('input[role="combobox"]');
+  autocompleteInputs.forEach((input, index) => {
+    setTimeout(() => {
+      // Skip if already has a value (and it's not just a placeholder)
+      if (input.value && input.value.trim() !== '' &&
+          !input.value.toLowerCase().includes('select') &&
+          !input.value.toLowerCase().includes('choose')) {
+        return;
+      }
+
+      // Find the popup button to open the dropdown (usually has aria-label="Open" or similar)
+      const container = input.closest('[class*="Autocomplete"], [class*="autocomplete"], .MuiAutocomplete-root');
+      const popupButton = container?.querySelector('button[aria-label*="Open"], button.MuiAutocomplete-popupIndicator, button[title*="Open"]');
+
+      // Click the popup button to open the dropdown
+      if (popupButton) {
+        popupButton.click();
+      } else {
+        // Fallback: click the input itself
+        input.click();
+        input.focus();
+      }
+
+      // Wait for dropdown to open
+      setTimeout(() => {
+        // Get the listbox ID from aria-controls
+        const listboxId = input.getAttribute('aria-controls');
+        let listbox;
+
+        if (listboxId) {
+          listbox = document.getElementById(listboxId);
+        } else {
+          // Fallback: look for visible listbox near the input
+          listbox = container?.querySelector('[role="listbox"]');
+          if (!listbox) {
+            const allListboxes = document.querySelectorAll('[role="listbox"]:not([aria-hidden="true"])');
+            listbox = allListboxes[allListboxes.length - 1];
+          }
+        }
+
+        if (listbox) {
+          const options = listbox.querySelectorAll('[role="option"]:not([aria-disabled="true"])');
+          if (options.length > 0) {
+            // Pick a random option (skip first if it looks like a placeholder)
+            let randomIndex = Math.floor(Math.random() * options.length);
+            const firstText = options[0].textContent?.toLowerCase() || '';
+            if (firstText.includes('select') || firstText.includes('choose') || firstText.includes('--') || firstText.includes('none')) {
+              randomIndex = Math.floor(Math.random() * (options.length - 1)) + 1;
+            }
+
+            const selectedOption = options[randomIndex];
+
+            // Trigger mousedown, mouseup, and click for proper MUI handling
+            selectedOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+            selectedOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+            selectedOption.click();
+
+            // Wait a bit, then trigger events on the input to commit the selection
+            setTimeout(() => {
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+              input.blur();
+            }, 100);
+          }
+        }
+      }, 300);
+    }, index * 700); // Stagger to avoid conflicts
+  });
+
   // Handle custom dropdowns (common patterns)
   // First, find and click dropdown triggers that weren't filled by regular inputs
   const dropdownTriggers = document.querySelectorAll('[data-is-dropdown="true"], [role="combobox"]:not(input), button[aria-haspopup="listbox"], button[aria-haspopup="menu"]');
