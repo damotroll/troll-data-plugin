@@ -381,47 +381,164 @@ document.addEventListener('DOMContentLoaded', async () => {
   function fillFormsWithData(data) {
     let filledCount = 0;
     const allInputs = document.querySelectorAll('input, select, textarea');
-    
+
+    // Keep track of which fields are autocomplete so we can handle them separately
+    const autocompleteFields = [];
+
     data.forEach(fieldData => {
       if (fieldData.index !== undefined && allInputs[fieldData.index]) {
         const input = allInputs[fieldData.index];
-        
+
         if (fieldData.value !== undefined && fieldData.value !== null) {
-          // Trigger focus event
-          input.focus();
-          
-          // Set value
-          if (input.tagName === 'SELECT') {
-            // For select, try to match option value
-            const option = Array.from(input.options).find(opt => 
-              opt.value === fieldData.value || 
+          // Check if this is an autocomplete/combobox field
+          const isAutocomplete = input.getAttribute('role') === 'combobox' ||
+                                 input.getAttribute('aria-haspopup') === 'listbox' ||
+                                 input.getAttribute('aria-autocomplete') === 'list';
+
+          if (isAutocomplete) {
+            // Store for later processing with proper timing
+            autocompleteFields.push({ input, value: fieldData.value, index: autocompleteFields.length });
+          } else if (input.tagName === 'SELECT') {
+            // For standard select, try to match option value
+            const option = Array.from(input.options).find(opt =>
+              opt.value === fieldData.value ||
               opt.textContent.trim() === fieldData.value
             );
             if (option) {
               input.value = option.value;
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+              filledCount++;
             }
           } else {
+            // Standard input field
+            input.focus();
             input.value = fieldData.value;
+
+            // Trigger change events
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            input.dispatchEvent(new Event('blur', { bubbles: true }));
+
+            // Add visual feedback
+            input.style.transition = 'background-color 0.3s';
+            input.style.backgroundColor = '#e8f5e9';
+            setTimeout(() => {
+              input.style.backgroundColor = '';
+            }, 1000);
+
+            filledCount++;
           }
-          
-          // Trigger change events
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-          input.dispatchEvent(new Event('blur', { bubbles: true }));
-          
-          // Add visual feedback
-          input.style.transition = 'background-color 0.3s';
-          input.style.backgroundColor = '#e8f5e9';
-          setTimeout(() => {
-            input.style.backgroundColor = '';
-          }, 1000);
-          
-          filledCount++;
         }
       }
     });
-    
-    return filledCount;
+
+    // Handle autocomplete fields with proper timing and the correct value from OpenAI
+    autocompleteFields.forEach(({ input, value, index }) => {
+      setTimeout(() => {
+        fillAutocompleteField(input, value);
+      }, index * 800); // Stagger to avoid conflicts
+    });
+
+    return filledCount + autocompleteFields.length;
+  }
+
+  function fillAutocompleteField(input, targetValue) {
+    // Skip if already has a value
+    if (input.value && input.value.trim() !== '' &&
+        !input.value.toLowerCase().includes('select') &&
+        !input.value.toLowerCase().includes('choose')) {
+      return;
+    }
+
+    // Step 1: Open the dropdown by clicking the input
+    input.click();
+    input.focus();
+
+    // Step 2: Wait for options to render
+    setTimeout(() => {
+      // Step 3: Find the listbox
+      const listboxId = input.getAttribute('aria-controls');
+      let listbox;
+
+      if (listboxId) {
+        listbox = document.getElementById(listboxId);
+      } else {
+        // Fallback: look for visible listbox
+        const allListboxes = document.querySelectorAll('[role="listbox"]:not([aria-hidden="true"])');
+        listbox = allListboxes[allListboxes.length - 1];
+      }
+
+      if (listbox) {
+        // Find all selectable options
+        const options = listbox.querySelectorAll('[role="option"]:not([aria-disabled="true"])');
+
+        if (options.length > 0) {
+          // Step 4: Find the option matching the target value from OpenAI
+          let selectedOption = null;
+
+          // Try exact match first
+          selectedOption = Array.from(options).find(opt =>
+            opt.textContent.trim().toLowerCase() === targetValue.toLowerCase()
+          );
+
+          // Try partial match if exact match fails
+          if (!selectedOption) {
+            selectedOption = Array.from(options).find(opt =>
+              opt.textContent.trim().toLowerCase().includes(targetValue.toLowerCase()) ||
+              targetValue.toLowerCase().includes(opt.textContent.trim().toLowerCase())
+            );
+          }
+
+          // Fallback to first non-placeholder option if no match
+          if (!selectedOption) {
+            const firstText = options[0].textContent?.toLowerCase() || '';
+            if (firstText.includes('select') || firstText.includes('choose') ||
+                firstText.includes('--') || firstText === '') {
+              selectedOption = options[1] || options[0];
+            } else {
+              selectedOption = options[0];
+            }
+          }
+
+          if (selectedOption) {
+            // Step 5: Click the option to select it
+            selectedOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+            selectedOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+            selectedOption.click();
+
+            // Step 6: Close the dropdown properly
+            setTimeout(() => {
+              // Method 1: Press Escape to close dropdown
+              input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, bubbles: true }));
+
+              // Method 2: Click the popup indicator button to close
+              const autocompleteContainer = input.closest('.MuiAutocomplete-root');
+              if (autocompleteContainer) {
+                const popupButton = autocompleteContainer.querySelector('.MuiAutocomplete-popupIndicator');
+                if (popupButton) {
+                  popupButton.click();
+                }
+              }
+
+              // Method 3: Blur the input
+              input.dispatchEvent(new Event('blur', { bubbles: true }));
+              input.blur();
+
+              // Verify and provide visual feedback
+              setTimeout(() => {
+                if (input.value && input.value.trim() !== '') {
+                  input.style.transition = 'background-color 0.3s';
+                  input.style.backgroundColor = '#e8f5e9';
+                  setTimeout(() => {
+                    input.style.backgroundColor = '';
+                  }, 1000);
+                }
+              }, 100);
+            }, 100);
+          }
+        }
+      }
+    }, 300); // Wait for dropdown to render
   }
 
   function showStatus(message, type) {
