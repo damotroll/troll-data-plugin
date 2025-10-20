@@ -395,8 +395,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                                  input.getAttribute('aria-haspopup') === 'listbox' ||
                                  input.getAttribute('aria-autocomplete') === 'list';
 
+          console.log('[AutoFill] Field check:', {
+            index: fieldData.index,
+            value: fieldData.value,
+            role: input.getAttribute('role'),
+            ariaHaspopup: input.getAttribute('aria-haspopup'),
+            ariaAutocomplete: input.getAttribute('aria-autocomplete'),
+            isAutocomplete: isAutocomplete,
+            tagName: input.tagName
+          });
+
           if (isAutocomplete) {
             // Store for later processing with proper timing
+            console.log('[AutoFill] Adding to autocomplete queue:', fieldData.value);
             autocompleteFields.push({ input, value: fieldData.value, index: autocompleteFields.length });
           } else if (input.tagName === 'SELECT') {
             // For standard select, try to match option value
@@ -443,101 +454,153 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function fillAutocompleteField(input, targetValue) {
+    console.log('[AutoFill] Processing autocomplete field:', {
+      label: input.closest('.MuiFormControl-root')?.querySelector('label')?.textContent,
+      targetValue: targetValue,
+      currentValue: input.value
+    });
+
     // Skip if already has a value
     if (input.value && input.value.trim() !== '' &&
         !input.value.toLowerCase().includes('select') &&
         !input.value.toLowerCase().includes('choose')) {
+      console.log('[AutoFill] Skipping - field already has value:', input.value);
       return;
     }
 
-    // Step 1: Open the dropdown by clicking the input
-    input.click();
+    // Step 1: Focus the input first
     input.focus();
 
-    // Step 2: Wait for options to render
+    // Step 2: Open the dropdown by clicking the popup button
+    const autocompleteContainer = input.closest('.MuiAutocomplete-root');
+    const popupButton = autocompleteContainer?.querySelector('.MuiAutocomplete-popupIndicator');
+
+    if (popupButton) {
+      console.log('[AutoFill] Clicking popup button to open dropdown');
+      popupButton.click();
+    } else {
+      console.log('[AutoFill] No popup button found, clicking input instead');
+      input.click();
+    }
+
+    // Step 3: Wait for options to render
     setTimeout(() => {
-      // Step 3: Find the listbox
+      console.log('[AutoFill] Looking for listbox...');
+
+      // Find the listbox
       const listboxId = input.getAttribute('aria-controls');
       let listbox;
 
       if (listboxId) {
         listbox = document.getElementById(listboxId);
+        console.log('[AutoFill] Found listbox by ID:', listboxId);
       } else {
-        // Fallback: look for visible listbox
         const allListboxes = document.querySelectorAll('[role="listbox"]:not([aria-hidden="true"])');
         listbox = allListboxes[allListboxes.length - 1];
+        console.log('[AutoFill] Found listbox by query, count:', allListboxes.length);
       }
 
-      if (listbox) {
-        // Find all selectable options
-        const options = listbox.querySelectorAll('[role="option"]:not([aria-disabled="true"])');
+      if (!listbox) {
+        console.log('[AutoFill] ERROR: No listbox found!');
+        return;
+      }
 
-        if (options.length > 0) {
-          // Step 4: Find the option matching the target value from OpenAI
-          let selectedOption = null;
+      // Find all selectable options
+      const options = listbox.querySelectorAll('[role="option"]:not([aria-disabled="true"])');
+      console.log('[AutoFill] Found options:', options.length, Array.from(options).map(o => o.textContent.trim()));
 
-          // Try exact match first
-          selectedOption = Array.from(options).find(opt =>
-            opt.textContent.trim().toLowerCase() === targetValue.toLowerCase()
-          );
+      if (options.length === 0) {
+        console.log('[AutoFill] ERROR: No options found in listbox!');
+        return;
+      }
 
-          // Try partial match if exact match fails
-          if (!selectedOption) {
-            selectedOption = Array.from(options).find(opt =>
-              opt.textContent.trim().toLowerCase().includes(targetValue.toLowerCase()) ||
-              targetValue.toLowerCase().includes(opt.textContent.trim().toLowerCase())
-            );
-          }
+      // Step 4: Find the option matching the target value from OpenAI
+      let selectedOption = null;
+      let matchType = 'none';
 
-          // Fallback to first non-placeholder option if no match
-          if (!selectedOption) {
-            const firstText = options[0].textContent?.toLowerCase() || '';
-            if (firstText.includes('select') || firstText.includes('choose') ||
-                firstText.includes('--') || firstText === '') {
-              selectedOption = options[1] || options[0];
-            } else {
-              selectedOption = options[0];
-            }
-          }
+      // Try exact match first
+      selectedOption = Array.from(options).find(opt =>
+        opt.textContent.trim().toLowerCase() === targetValue.toLowerCase()
+      );
+      if (selectedOption) matchType = 'exact';
 
-          if (selectedOption) {
-            // Step 5: Click the option to select it
-            // MUI Autocomplete responds to mousedown + click
-            selectedOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
-            selectedOption.click();
+      // Try partial match if exact match fails
+      if (!selectedOption) {
+        selectedOption = Array.from(options).find(opt =>
+          opt.textContent.trim().toLowerCase().includes(targetValue.toLowerCase()) ||
+          targetValue.toLowerCase().includes(opt.textContent.trim().toLowerCase())
+        );
+        if (selectedOption) matchType = 'partial';
+      }
 
-            // Step 6: Wait for MUI to process the selection and close naturally
-            // Don't force close - let MUI handle it
-            setTimeout(() => {
-              // Only close if dropdown is still open after selection
-              const isStillOpen = input.getAttribute('aria-expanded') === 'true';
-
-              if (isStillOpen) {
-                // Gently close by clicking the popup button
-                const autocompleteContainer = input.closest('.MuiAutocomplete-root');
-                if (autocompleteContainer) {
-                  const popupButton = autocompleteContainer.querySelector('.MuiAutocomplete-popupIndicator');
-                  if (popupButton) {
-                    popupButton.click();
-                  }
-                }
-              }
-
-              // Provide visual feedback after a bit more time
-              setTimeout(() => {
-                if (input.value && input.value.trim() !== '') {
-                  input.style.transition = 'background-color 0.3s';
-                  input.style.backgroundColor = '#e8f5e9';
-                  setTimeout(() => {
-                    input.style.backgroundColor = '';
-                  }, 1000);
-                }
-              }, 200);
-            }, 300); // Wait 300ms for MUI to process the selection
-          }
+      // Fallback to first non-placeholder option if no match
+      if (!selectedOption) {
+        const firstText = options[0].textContent?.toLowerCase() || '';
+        if (firstText.includes('select') || firstText.includes('choose') ||
+            firstText.includes('--') || firstText === '') {
+          selectedOption = options[1] || options[0];
+        } else {
+          selectedOption = options[0];
         }
+        matchType = 'fallback';
       }
-    }, 400); // Wait 400ms for dropdown to render
+
+      console.log('[AutoFill] Selected option:', {
+        text: selectedOption?.textContent.trim(),
+        matchType: matchType,
+        targetValue: targetValue
+      });
+
+      if (selectedOption) {
+        // Step 5: Use keyboard navigation which is more reliable
+        // Set the input value first
+        const optionText = selectedOption.textContent.trim();
+
+        // Simulate typing to filter to the option
+        input.value = optionText;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+
+        console.log('[AutoFill] Set input value to:', optionText);
+
+        // Wait a moment then select the option
+        setTimeout(() => {
+          // Click the option
+          selectedOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+          selectedOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+          selectedOption.click();
+
+          console.log('[AutoFill] Clicked option');
+
+          // Dispatch change event
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+
+          // Wait for MUI to process
+          setTimeout(() => {
+            const isStillOpen = input.getAttribute('aria-expanded') === 'true';
+            console.log('[AutoFill] After click - dropdown still open?', isStillOpen, 'value:', input.value);
+
+            if (isStillOpen && popupButton) {
+              console.log('[AutoFill] Closing dropdown with popup button');
+              popupButton.click();
+            }
+
+            // Visual feedback
+            setTimeout(() => {
+              if (input.value && input.value.trim() !== '') {
+                console.log('[AutoFill] SUCCESS - Final value:', input.value);
+                input.style.transition = 'background-color 0.3s';
+                input.style.backgroundColor = '#e8f5e9';
+                setTimeout(() => {
+                  input.style.backgroundColor = '';
+                }, 1000);
+              } else {
+                console.log('[AutoFill] WARNING - No value set after process');
+              }
+            }, 100);
+          }, 400);
+        }, 100);
+      }
+    }, 500); // Increased wait time for dropdown to fully render
   }
 
   function showStatus(message, type) {
