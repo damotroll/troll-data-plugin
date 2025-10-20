@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Forms - Smart Form Filler Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 40px;
+      font-size: 32px;
+    }
+    
+    .forms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+    }
+    
+    .form-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    h2 {
+      color: #34495e;
+      margin-bottom: 20px;
+      font-size: 20px;
+      border-bottom: 2px solid #ecf0f1;
+      padding-bottom: 10px;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 100%;
+      margin-top: 10px;
+    }
+    
+    button:hover {
+      background: #2980b9;
+    }
+    
+    .required {
+      color: #e74c3c;
+    }
+    
+    .info-box {
+      background: #ecf0f1;
+      border-left: 4px solid #3498db;
+      padding: 15px;
+      margin-bottom: 30px;
+      border-radius: 6px;
+    }
+    
+    .info-box p {
+      color: #2c3e50;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Smart Form Filler Test Page</h1>
+    
+    <div class="info-box">
+      <p><strong>Instructions:</strong> Use the Smart Form Filler extension to automatically fill these test forms. Click the extension icon and select "Fill Forms on This Page" to see the AI-powered form filling in action!</p>
+    </div>
+    
+    <div class="forms-grid">
+      <!-- Registration Form -->
+      <div class="form-card">
+        <h2>User Registration</h2>
+        <form>
+          <div class="form-group">
+            <label for="firstName">First Name <span class="required">*</span></label>
+            <input type="text" id="firstName" name="firstName" required>
+          </div>
+          <div class="form-group">
+            <label for="lastName">Last Name <span class="required">*</span></label>
+            <input type="text" id="lastName" name="lastName" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address <span class="required">*</span></label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="Choose a username">
+          </div>
+          <div class="form-group">
+            <label for="password">Password <span class="required">*</span></label>
+            <input type="password" id="password" name="password" required>
+          </div>
+          <div class="form-group">
+            <label for="birthdate">Date of Birth</label>
+            <input type="date" id="birthdate" name="birthdate">
+          </div>
+          <div class="form-group">
+            <label for="gender">Gender</label>
+            <select id="gender" name="gender">
+              <option value="">Select...</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+              <option value="prefer-not-to-say">Prefer not to say</option>
+            </select>
+          </div>
+          <button type="submit">Register</button>
+        </form>
+      </div>
+      
+      <!-- Contact Form -->
+      <div class="form-card">
+        <h2>Contact Information</h2>
+        <form>
+          <div class="form-group">
+            <label for="fullName">Full Name <span class="required">*</span></label>
+            <input type="text" id="fullName" name="fullName" required>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567">
+          </div>
+          <div class="form-group">
+            <label for="company">Company</label>
+            <input type="text" id="company" name="company">
+          </div>
+          <div class="form-group">
+            <label for="website">Website</label>
+            <input type="url" id="website" name="website" placeholder="https://example.com">
+          </div>
+          <div class="form-group">
+            <label for="subject">Subject</label>
+            <input type="text" id="subject" name="subject">
+          </div>
+          <div class="form-group">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" placeholder="Your message here..."></textarea>
+          </div>
+          <button type="submit">Send Message</button>
+        </form>
+      </div>
+      
+      <!-- Shipping Address Form -->
+      <div class="form-card">
+        <h2>Shipping Address</h2>
+        <form>
+          <div class="form-group">
+            <label for="recipientName">Recipient Name <span class="required">*</span></label>
+            <input type="text" id="recipientName" name="recipientName" required>
+          </div>
+          <div class="form-group">
+            <label for="streetAddress">Street Address <span class="required">*</span></label>
+            <input type="text" id="streetAddress" name="address" required>
+          </div>
+          <div class="form-group">
+            <label for="addressLine2">Address Line 2</label>
+            <input type="text" id="addressLine2" name="addressLine2" placeholder="Apartment, suite, etc.">
+          </div>
+          <div class="form-group">
+            <label for="city">City <span class="required">*</span></label>
+            <input type="text" id="city" name="city" required>
+          </div>
+          <div class="form-group">
+            <label for="state">State/Province <span class="required">*</span></label>
+            <select id="state" name="state" required>
+              <option value="">Select State...</option>
+              <option value="CA">California</option>
+              <option value="NY">New York</option>
+              <option value="TX">Texas</option>
+              <option value="FL">Florida</option>
+              <option value="IL">Illinois</option>
+              <option value="WA">Washington</option>
+              <option value="MA">Massachusetts</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="zipCode">ZIP/Postal Code <span class="required">*</span></label>
+            <input type="text" id="zipCode" name="zipCode" pattern="[0-9]{5}" required>
+          </div>
+          <div class="form-group">
+            <label for="country">Country <span class="required">*</span></label>
+            <select id="country" name="country" required>
+              <option value="">Select Country...</option>
+              <option value="US">United States</option>
+              <option value="CA">Canada</option>
+              <option value="UK">United Kingdom</option>
+              <option value="AU">Australia</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <button type="submit">Save Address</button>
+        </form>
+      </div>
+      
+      <!-- Payment Form -->
+      <div class="form-card">
+        <h2>Payment Information</h2>
+        <form>
+          <div class="form-group">
+            <label for="cardholderName">Cardholder Name <span class="required">*</span></label>
+            <input type="text" id="cardholderName" name="cardholderName" required>
+          </div>
+          <div class="form-group">
+            <label for="cardNumber">Card Number <span class="required">*</span></label>
+            <input type="text" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456" pattern="[0-9]{16}" required>
+          </div>
+          <div class="form-group">
+            <label for="expiryDate">Expiry Date <span class="required">*</span></label>
+            <input type="text" id="expiryDate" name="expiryDate" placeholder="MM/YY" pattern="[0-9]{2}/[0-9]{2}" required>
+          </div>
+          <div class="form-group">
+            <label for="cvv">CVV <span class="required">*</span></label>
+            <input type="text" id="cvv" name="cvv" placeholder="123" pattern="[0-9]{3,4}" maxlength="4" required>
+          </div>
+          <div class="form-group">
+            <label for="billingZip">Billing ZIP Code</label>
+            <input type="text" id="billingZip" name="billingZip" pattern="[0-9]{5}">
+          </div>
+          <button type="submit">Process Payment</button>
+        </form>
+      </div>
+      
+      <!-- Survey Form -->
+      <div class="form-card">
+        <h2>Customer Survey</h2>
+        <form>
+          <div class="form-group">
+            <label for="customerName">Your Name</label>
+            <input type="text" id="customerName" name="customerName">
+          </div>
+          <div class="form-group">
+            <label for="customerEmail">Your Email</label>
+            <input type="email" id="customerEmail" name="customerEmail">
+          </div>
+          <div class="form-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" name="age" min="18" max="120">
+          </div>
+          <div class="form-group">
+            <label for="satisfaction">Satisfaction Level</label>
+            <select id="satisfaction" name="satisfaction">
+              <option value="">Select...</option>
+              <option value="very-satisfied">Very Satisfied</option>
+              <option value="satisfied">Satisfied</option>
+              <option value="neutral">Neutral</option>
+              <option value="dissatisfied">Dissatisfied</option>
+              <option value="very-dissatisfied">Very Dissatisfied</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="recommendationScore">How likely to recommend? (1-10)</label>
+            <input type="number" id="recommendationScore" name="recommendationScore" min="1" max="10">
+          </div>
+          <div class="form-group">
+            <label for="feedback">Additional Feedback</label>
+            <textarea id="feedback" name="feedback" placeholder="Share your thoughts..."></textarea>
+          </div>
+          <button type="submit">Submit Survey</button>
+        </form>
+      </div>
+      
+      <!-- Login Form -->
+      <div class="form-card">
+        <h2>Login</h2>
+        <form>
+          <div class="form-group">
+            <label for="loginEmail">Email or Username <span class="required">*</span></label>
+            <input type="text" id="loginEmail" name="loginEmail" required>
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password <span class="required">*</span></label>
+            <input type="password" id="loginPassword" name="loginPassword" required>
+          </div>
+          <button type="submit">Sign In</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Prevent actual form submission for testing
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        alert('Form submitted! (This is a test page - no data was actually sent)');
+        return false;
+      });
+    });
+  </script>
+</body>
+</html>
