@@ -311,7 +311,74 @@ function fillForms(data) {
       filledCount++;
     }
   });
-  
+
+  // Fill native select dropdowns
+  document.querySelectorAll('select').forEach(select => {
+    if (select.options.length > 1) {
+      // Pick a random option (excluding the first if it's a placeholder)
+      const randomIndex = Math.floor(Math.random() * (select.options.length - 1)) + 1;
+      select.selectedIndex = randomIndex;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+
+  // Handle custom dropdowns (common patterns)
+  // First, find and click dropdown triggers that weren't filled by regular inputs
+  const dropdownTriggers = document.querySelectorAll('[data-is-dropdown="true"], [role="combobox"]:not(input), button[aria-haspopup="listbox"], button[aria-haspopup="menu"]');
+
+  dropdownTriggers.forEach((trigger, index) => {
+    setTimeout(() => {
+      // Check if this dropdown is still empty/unselected
+      const hasValue = trigger.textContent?.trim() &&
+                      !trigger.textContent.toLowerCase().includes('select') &&
+                      !trigger.textContent.toLowerCase().includes('choose');
+
+      if (!hasValue) {
+        // Click to open the dropdown
+        trigger.click();
+
+        // Wait for dropdown to open, then select an option
+        setTimeout(() => {
+          // Look for the opened dropdown menu associated with this trigger
+          const dropdownId = trigger.getAttribute('aria-controls');
+          let menu;
+
+          if (dropdownId) {
+            menu = document.getElementById(dropdownId);
+          } else {
+            // Find nearby visible dropdown menu
+            menu = trigger.closest('div, span')?.querySelector('[role="listbox"], [role="menu"], ul[class*="dropdown"], ul[class*="menu"]');
+
+            // Or look for any visible dropdown on the page
+            if (!menu) {
+              const allMenus = document.querySelectorAll('[role="listbox"]:not([aria-hidden="true"]), [role="menu"]:not([aria-hidden="true"])');
+              menu = allMenus[allMenus.length - 1]; // Get the most recently opened
+            }
+          }
+
+          if (menu) {
+            const options = menu.querySelectorAll('[role="option"]:not([aria-disabled="true"]), li:not([role="presentation"]):not([aria-disabled="true"])');
+            if (options.length > 0) {
+              // Pick a random option (skip first if it looks like a placeholder)
+              let randomIndex = Math.floor(Math.random() * options.length);
+              const firstText = options[0].textContent?.toLowerCase() || '';
+              if (firstText.includes('select') || firstText.includes('choose') || firstText.includes('--')) {
+                randomIndex = Math.floor(Math.random() * (options.length - 1)) + 1;
+              }
+
+              const selectedOption = options[randomIndex];
+              selectedOption.click();
+
+              // Also try triggering change events on the trigger element
+              trigger.dispatchEvent(new Event('change', { bubbles: true }));
+              trigger.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }
+        }, 300);
+      }
+    }, index * 600); // Stagger clicks to avoid conflicts
+  });
+
   return filledCount;
 }
 
