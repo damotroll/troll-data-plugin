@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Smart Form Filler - AI Demo Data",
-  "version": "1.0.0",
-  "description": "Intelligently fill forms with AI-generated dummy data for testing and demos",
+  "name": "Smart Form Filler - Free Demo Data",
+  "version": "2.0.0",
+  "description": "Intelligently fill forms with realistic dummy data for testing and demos - 100% free, no API key needed",
   "permissions": [
     "activeTab",
     "storage",
@@ -10,7 +10,7 @@
     "tabs"
   ],
   "host_permissions": [
-    "https://api.openai.com/*"
+    "https://randomuser.me/*"
   ],
   "background": {
     "service_worker": "background.js"

@@ -10,86 +10,150 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-// Generate form data using OpenAI API
+// Generate form data using Random User API
 async function generateFormData(fields, context, options) {
   try {
-    // Get API key and model from storage
-    const settings = await chrome.storage.local.get(['apiKey', 'model']);
-    if (!settings.apiKey) {
-      throw new Error('API key not configured');
+    // Get target country from options
+    const country = options.targetCountry || '';
+
+    // Map country codes to Random User API nationality codes
+    const nationalityMap = {
+      'US': 'us',
+      'GB': 'gb',
+      'CA': 'ca',
+      'AU': 'au',
+      'DE': 'de',
+      'FR': 'fr',
+      'ES': 'es',
+      'IT': 'it',
+      'NL': 'nl',
+      'NO': 'no',
+      'DK': 'dk',
+      'FI': 'fi',
+      'NZ': 'nz',
+      'BR': 'br',
+      'MX': 'mx',
+      'CH': 'ch',
+      'IE': 'ie',
+      'TR': 'tr'
+    };
+
+    // Build Random User API URL
+    let apiUrl = 'https://randomuser.me/api/?results=1';
+    if (country && nationalityMap[country]) {
+      apiUrl += `&nat=${nationalityMap[country]}`;
     }
-    
-    const model = settings.model || 'gpt-4o-mini';
-    
-    // Prepare the prompt
-    const prompt = buildPrompt(fields, context, options);
-    
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${settings.apiKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          {
-            role: 'system',
-            content: `You are a professional test data generator for forms. Generate consistent, realistic but fake data.
 
-CRITICAL RULES:
-1. Return ONLY valid JSON without any markdown formatting, code blocks, or explanations
-2. All data must be fake but realistic enough to pass validation
-3. ${options.consistentPerson ? 'Use the SAME person\'s information across all name, email, and personal fields' : 'Generate different data for each field'}
-4. ${options.targetCountry ? `Generate data for a person FROM ${getCountryName(options.targetCountry)}. Their nationality MUST be ${getCountryName(options.targetCountry)} (or the corresponding nationality like "Norwegian" for Norway). ALL country and nationality fields must match ${getCountryName(options.targetCountry)}.` : 'Use appropriate formats based on field context'}
-5. Ensure all related fields are consistent (e.g., email should match the person's name, nationality matches country)
-6. Use proper formats for each country (phone numbers, postal codes, addresses, etc.)
-7. ${options.useRealistic ? 'Create believable, professional data' : 'Use clearly fake test data like "Test User"'}
+    // Call Random User API
+    const response = await fetch(apiUrl);
 
-IMPORTANT: Your response must be ONLY a JSON object, nothing else.`
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3, // Lower temperature for more consistent output
-        max_tokens: 2000
-      })
-    });
-    
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'API request failed');
+      throw new Error('Random User API request failed');
     }
-    
+
     const data = await response.json();
-    const content = data.choices[0].message.content;
-    
-    // Parse JSON response
-    let generatedData;
-    try {
-      // Remove any markdown code blocks if present
-      const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      generatedData = JSON.parse(cleanContent);
-    } catch (e) {
-      throw new Error('Failed to parse AI response');
-    }
-    
-    // Map generated data to fields
+    const user = data.results[0];
+
+    // Map Random User data to form fields
     return fields.map(field => {
-      const value = generatedData[field.id] || generateFallbackValue(field, options);
+      const value = mapRandomUserToField(user, field, options);
       return {
         fieldId: field.id,
         value: value
       };
     });
-    
+
   } catch (error) {
     console.error('Error generating form data:', error);
     // Fallback to local generation
     return generateLocalData(fields, options);
+  }
+}
+
+// Map Random User API data to specific field types
+function mapRandomUserToField(user, field, options) {
+  const realistic = options.useRealistic;
+
+  switch (field.fieldType) {
+    case 'email':
+      return user.email;
+    case 'phone':
+      return user.phone || user.cell;
+    case 'firstName':
+      return user.name.first;
+    case 'lastName':
+      return user.name.last;
+    case 'name':
+      return `${user.name.first} ${user.name.last}`;
+    case 'title':
+      return field.options && field.options.length > 0 ?
+        field.options.find(opt => opt.toLowerCase().includes(user.name.title.toLowerCase())) || field.options[0] :
+        user.name.title;
+    case 'address':
+      return `${user.location.street.number} ${user.location.street.name}`;
+    case 'city':
+      return user.location.city;
+    case 'state':
+      // For select fields, try to match the state from options
+      if (field.options && field.options.length > 0) {
+        return field.options[0];
+      }
+      return user.location.state;
+    case 'zip':
+      return user.location.postcode.toString();
+    case 'country':
+      // For select fields, try to match the country
+      if (field.options && field.options.length > 0) {
+        const countryMatch = field.options.find(opt =>
+          opt.toLowerCase().includes(user.location.country.toLowerCase()) ||
+          user.location.country.toLowerCase().includes(opt.toLowerCase())
+        );
+        return countryMatch || field.options[0];
+      }
+      return user.location.country;
+    case 'username':
+      return user.login.username;
+    case 'password':
+      return realistic ? user.login.password : 'Test123!';
+    case 'age':
+      return user.dob.age.toString();
+    case 'birthdate':
+      // Format: YYYY-MM-DD
+      const dob = new Date(user.dob.date);
+      return dob.toISOString().split('T')[0];
+    case 'gender':
+      // Match gender to options if available
+      if (field.options && field.options.length > 0) {
+        const genderMatch = field.options.find(opt =>
+          opt.toLowerCase().includes(user.gender.toLowerCase())
+        );
+        return genderMatch || field.options[0];
+      }
+      return user.gender;
+    case 'company':
+      return realistic ? `${user.name.last} Corporation` : 'Test Company';
+    case 'website':
+      return realistic ? `https://www.${user.login.username}.com` : 'https://test.com';
+    case 'creditCard':
+      return '4111111111111111'; // Test Visa number
+    case 'cvv':
+      return '123';
+    case 'expiry':
+      return '12/25';
+    case 'description':
+      return realistic ?
+        `This is a sample description for testing purposes. Contact me at ${user.email} for more information.` :
+        'Test description text.';
+    case 'date':
+      const today = new Date();
+      const futureDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      return futureDate.toISOString().split('T')[0];
+    case 'select':
+      return field.options && field.options.length > 0 ? field.options[0] : '';
+    case 'number':
+      return user.dob.age.toString();
+    default:
+      return generateFallbackValue(field, options);
   }
 }
 
@@ -124,98 +188,6 @@ function getCountryName(code) {
   return countries[code] || code;
 }
 
-// Build prompt for OpenAI
-function buildPrompt(fields, context, options) {
-  const countryName = options.targetCountry ? getCountryName(options.targetCountry) : null;
-  
-  let prompt = `Generate test data for a form with ${fields.length} fields.\n\n`;
-  
-  if (countryName) {
-    prompt += `COUNTRY CONTEXT: Generate all data for a person from ${countryName}. `;
-    prompt += `This person should be a ${countryName} national. Use ${countryName} formats for:\n`;
-    prompt += `- Nationality: Must be "${countryName}" or the corresponding nationality (e.g., "Norwegian" for Norway)\n`;
-    prompt += `- Country fields: Must be "${countryName}"\n`;
-    prompt += `- Phone numbers (proper country format)\n`;
-    prompt += `- Addresses (real city names, proper postal/zip code format)\n`;
-    prompt += `- State/Province names (if applicable)\n`;
-    prompt += `- Date formats\n`;
-    prompt += `- ID numbers (if applicable)\n\n`;
-  }
-  
-  if (options.consistentPerson) {
-    prompt += `CONSISTENCY REQUIREMENT: Use the SAME person throughout:\n`;
-    prompt += `- Generate ONE person's full name\n`;
-    prompt += `- Use that SAME name for all name fields\n`;
-    prompt += `- Email should be based on that person's name\n`;
-    prompt += `- Keep all personal data consistent for this one person\n\n`;
-  }
-  
-  if (context) {
-    prompt += `PAGE CONTEXT:\n`;
-    prompt += `- Domain: ${context.domain}\n`;
-    prompt += `- Page Title: ${context.title}\n`;
-    if (context.hasLoginForm) prompt += `- Type: Login Form\n`;
-    if (context.hasCheckoutForm) prompt += `- Type: Checkout Form\n`;
-    if (context.hasRegistrationForm) prompt += `- Type: Registration Form\n`;
-    prompt += '\n';
-  }
-  
-  prompt += 'FIELDS TO FILL:\n';
-  prompt += 'Generate appropriate values for each field ID. Each field has the following properties:\n\n';
-  
-  // Group fields by type for better context
-  const groupedFields = {};
-  fields.forEach(field => {
-    if (!groupedFields[field.fieldType]) {
-      groupedFields[field.fieldType] = [];
-    }
-    groupedFields[field.fieldType].push(field);
-  });
-  
-  // Add fields with detailed information
-  fields.forEach(field => {
-    prompt += `Field ID: ${field.id}\n`;
-    prompt += `- Type: ${field.fieldType}\n`;
-    prompt += `- HTML Input Type: ${field.type}\n`;
-    
-    if (field.label) prompt += `- Label: "${field.label}"\n`;
-    if (field.attributes.placeholder) prompt += `- Placeholder: "${field.attributes.placeholder}"\n`;
-    if (field.attributes.name) prompt += `- Name attribute: "${field.attributes.name}"\n`;
-    
-    // Add constraints
-    if (field.attributes.maxLength) prompt += `- Max Length: ${field.attributes.maxLength}\n`;
-    if (field.attributes.pattern) prompt += `- Regex Pattern: ${field.attributes.pattern}\n`;
-    if (field.attributes.min) prompt += `- Min Value: ${field.attributes.min}\n`;
-    if (field.attributes.max) prompt += `- Max Value: ${field.attributes.max}\n`;
-    if (field.attributes.required) prompt += `- Required: Yes\n`;
-    
-    // Add select options
-    if (field.options && field.options.length > 0) {
-      prompt += `- Available Options: ${field.options.slice(0, 10).join(', ')}\n`;
-      if (field.options.length > 10) prompt += `  (and ${field.options.length - 10} more...)\n`;
-    }
-    
-    prompt += '\n';
-  });
-  
-  prompt += '\nGENERATION RULES:\n';
-  prompt += '1. Return a JSON object where keys are field IDs and values are the generated data\n';
-  prompt += '2. Follow all field constraints (maxLength, pattern, min/max)\n';
-  prompt += '3. For select fields, choose from the provided options\n';
-  prompt += '4. Generate valid, properly formatted data\n';
-  prompt += '5. Keep related fields consistent\n';
-  
-  if (countryName) {
-    prompt += `6. The person MUST be from ${countryName} - nationality field must match\n`;
-    prompt += `7. All country/nationality fields MUST be set to ${countryName} or its nationality\n`;
-    prompt += `8. All geographic data must be valid for ${countryName}\n`;
-    prompt += `9. Use real ${countryName} city names and valid postal codes\n`;
-  }
-  
-  prompt += '\nReturn ONLY the JSON object with field IDs as keys and generated values.';
-  
-  return prompt;
-}
 
 // Generate fallback value for a field
 function generateFallbackValue(field, options) {

@@ -1,16 +1,17 @@
-# Smart Form Filler - AI-Powered Test Data Generator
+# Smart Form Filler - Free Test Data Generator
 
-A Chrome/Chromium browser extension that intelligently fills forms with AI-generated dummy data for testing and demos using OpenAI's API.
+A Chrome/Chromium browser extension that intelligently fills forms with realistic dummy data for testing and demos using the Random User API - completely free, no API key required!
 
 ## Features
 
-- 🤖 **AI-Powered Data Generation**: Uses OpenAI's GPT models to generate contextually appropriate test data
+- 🎉 **100% Free**: Uses the free Random User API - no API key or signup needed!
 - 🎯 **Smart Field Detection**: Automatically detects and categorizes form fields (email, phone, address, etc.)
-- 🎨 **Context-Aware**: Analyzes page context to generate relevant data (login forms, checkout, registration)
+- 🌍 **Multi-Country Support**: Generate data for 18+ different countries
 - ⚡ **Multiple Fill Modes**: Fill all forms or only visible forms
 - 🔧 **Customizable Options**: Choose between realistic or clearly fake test data
-- 🔒 **Secure**: API key stored locally in browser storage
+- 👤 **Consistent Person Mode**: Use the same person's data across all fields
 - 💼 **Professional UI**: Clean, modern interface with visual feedback
+- ⚡ **Lightning Fast**: No AI processing delays - instant form filling!
 
 ## Installation
 
@@ -56,21 +57,9 @@ You can use a simple colored square or download free icons from sites like [Icon
 
 ## Setup
 
-1. **Get OpenAI API Key**:
-   - Go to [OpenAI Platform](https://platform.openai.com)
-   - Sign up or log in
-   - Navigate to API Keys section
-   - Create a new API key
-   - Copy the key (starts with `sk-`)
+No setup required! The extension works out of the box with no API keys or configuration needed.
 
-2. **Configure Extension**:
-   - Click the extension icon in your browser toolbar
-   - Paste your OpenAI API key
-   - Select your preferred model:
-     - **GPT-4o-mini**: Fastest and most cost-effective
-     - **GPT-4o**: Best quality responses
-     - **GPT-3.5-turbo**: Legacy option
-   - Click "Save Settings"
+Simply install the extension and start using it immediately!
 
 ## Usage
 
@@ -83,9 +72,11 @@ You can use a simple colored square or download free icons from sites like [Icon
 4. Watch as the forms are automatically filled with AI-generated data
 
 ### Options:
-- **Use realistic data**: Generates believable test data
+- **Target Country**: Select a specific country for data generation (US, UK, Canada, Germany, France, etc.)
+- **Use realistic data**: Generates believable test data vs. obviously fake test data
 - **Fill password fields**: Includes password fields in auto-fill
 - **Smart context detection**: Analyzes page context for better data generation
+- **Use same person across fields**: Ensures consistent person data throughout the form
 
 ## Field Types Supported
 
@@ -101,39 +92,39 @@ The extension intelligently detects and fills:
 
 ## API Usage and Costs
 
-The extension uses OpenAI's API, which has usage-based pricing:
-- **GPT-4o-mini**: ~$0.00015 per form (cheapest)
-- **GPT-4o**: ~$0.001 per form
-- **GPT-3.5-turbo**: ~$0.0002 per form
-
-Typical usage for testing/demos is very cost-effective.
+**Completely FREE!** This extension uses the [Random User API](https://randomuser.me), which is:
+- 100% free to use
+- No API key required
+- No rate limits for reasonable usage
+- Provides high-quality, realistic test data
+- Supports multiple countries and locales
 
 ## Security Notes
 
-- API keys are stored locally in your browser
-- Never share your API key
-- The extension only sends form field metadata to OpenAI, not actual user data
-- Generated data is dummy/fake data for testing only
+- No API keys or authentication required
+- The extension fetches random user data from Random User API
+- All data is fictional and generated for testing purposes only
 - No real personal information is processed or stored
+- Your settings are saved locally in your browser only
 
 ## Troubleshooting
 
 ### Extension Not Working:
-1. Check that your API key is valid
-2. Verify you have internet connection
-3. Check browser console for errors (F12)
-4. Try refreshing the page
+1. Verify you have internet connection (required for Random User API)
+2. Check browser console for errors (F12)
+3. Try refreshing the page
+4. Make sure you're on a regular webpage (not chrome:// pages)
 
 ### Forms Not Detected:
 1. Some dynamic forms may need page refresh
 2. Forms in iframes may not be accessible
 3. Try "Fill Visible Forms Only" option
+4. Check if forms are actually empty (extension skips pre-filled fields)
 
 ### API Errors:
-1. Verify API key is correct
-2. Check OpenAI API status
-3. Ensure you have API credits
-4. Try a different model
+1. Check your internet connection
+2. Random User API may be temporarily down (rare)
+3. Extension will fall back to local data generation if API fails
 
 ## Development
 
@@ -151,17 +142,19 @@ smart-form-filler/
 
 ### Customization:
 - Modify field patterns in `content.js` for custom field detection
-- Adjust prompts in `background.js` for different data generation
+- Adjust field mapping in `background.js` for different data generation
 - Customize UI in `popup.html` and CSS
+- Add more countries to the `nationalityMap` in `background.js`
 
 ## Privacy Policy
 
 This extension:
 - Only processes form structure, not user data
-- Stores API keys locally in browser
-- Sends only field metadata to OpenAI for generation
-- Does not collect or transmit personal information
+- Fetches fictional user data from Random User API
+- Settings are stored locally in your browser only
+- Does not collect or transmit any personal information
 - Generated data is fictional and for testing only
+- No analytics or tracking
 
 ## License
 
@@ -171,9 +164,14 @@ This extension is provided as-is for testing and development purposes.
 
 For issues or suggestions:
 1. Check the browser console for error messages
-2. Verify API key and internet connection
-3. Try different model options
+2. Verify internet connection (Random User API requires internet)
+3. Try different country options
 4. Refresh the page and retry
+
+## Credits
+
+This extension is powered by:
+- [Random User API](https://randomuser.me) - Free, open-source API for generating random user data
 
 ## Disclaimer
 

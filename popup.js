@@ -1,103 +1,54 @@
 // popup.js - Handle the extension popup interface
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const apiKeyInput = document.getElementById('apiKey');
-  const modelSelect = document.getElementById('model');
-  const saveBtn = document.getElementById('saveBtn');
   const fillBtn = document.getElementById('fillBtn');
   const fillVisibleBtn = document.getElementById('fillVisibleBtn');
   const statusDiv = document.getElementById('status');
   const statsDiv = document.getElementById('stats');
-  
+
   // Option checkboxes
   const useRealisticCheckbox = document.getElementById('useRealistic');
   const fillPasswordsCheckbox = document.getElementById('fillPasswords');
   const smartContextCheckbox = document.getElementById('smartContext');
   const consistentPersonCheckbox = document.getElementById('consistentPerson');
   const targetCountrySelect = document.getElementById('targetCountry');
-  
+
   // Load saved settings
   const settings = await chrome.storage.local.get([
-    'apiKey', 
-    'model', 
-    'useRealistic', 
-    'fillPasswords', 
+    'useRealistic',
+    'fillPasswords',
     'smartContext',
     'consistentPerson',
     'targetCountry'
   ]);
-  
-  if (settings.apiKey) {
-    apiKeyInput.value = settings.apiKey;
-    fillBtn.disabled = false;
-    fillVisibleBtn.disabled = false;
-  } else {
-    fillBtn.disabled = true;
-    fillVisibleBtn.disabled = true;
-  }
-  
-  if (settings.model) {
-    modelSelect.value = settings.model;
-  }
-  
+
   if (settings.targetCountry) {
     targetCountrySelect.value = settings.targetCountry;
   }
-  
+
   // Load checkbox settings
   useRealisticCheckbox.checked = settings.useRealistic !== false;
   fillPasswordsCheckbox.checked = settings.fillPasswords !== false;
   smartContextCheckbox.checked = settings.smartContext !== false;
   consistentPersonCheckbox.checked = settings.consistentPerson !== false;
   
-  // Save settings
-  saveBtn.addEventListener('click', async () => {
-    const apiKey = apiKeyInput.value.trim();
-    const model = modelSelect.value;
-    
-    if (!apiKey) {
-      showStatus('Please enter your OpenAI API key', 'error');
-      return;
-    }
-    
-    if (!apiKey.startsWith('sk-')) {
-      showStatus('Invalid API key format', 'error');
-      return;
-    }
-    
-    // Save to storage
-    await chrome.storage.local.set({
-      apiKey,
-      model,
-      useRealistic: useRealisticCheckbox.checked,
-      fillPasswords: fillPasswordsCheckbox.checked,
-      smartContext: smartContextCheckbox.checked,
-      consistentPerson: consistentPersonCheckbox.checked,
-      targetCountry: targetCountrySelect.value
-    });
-    
-    fillBtn.disabled = false;
-    fillVisibleBtn.disabled = false;
-    showStatus('Settings saved successfully!', 'success');
-  });
-  
-  // Save checkbox states on change
+  // Auto-save settings on change
   useRealisticCheckbox.addEventListener('change', async () => {
     await chrome.storage.local.set({ useRealistic: useRealisticCheckbox.checked });
   });
-  
+
   fillPasswordsCheckbox.addEventListener('change', async () => {
     await chrome.storage.local.set({ fillPasswords: fillPasswordsCheckbox.checked });
   });
-  
+
   smartContextCheckbox.addEventListener('change', async () => {
     await chrome.storage.local.set({ smartContext: smartContextCheckbox.checked });
   });
-  
+
   consistentPersonCheckbox.addEventListener('change', async () => {
     await chrome.storage.local.set({ consistentPerson: consistentPersonCheckbox.checked });
   });
-  
+
   targetCountrySelect.addEventListener('change', async () => {
     await chrome.storage.local.set({ targetCountry: targetCountrySelect.value });
   });
