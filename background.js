@@ -37,13 +37,13 @@ async function generateFormData(fields, context, options) {
           {
             role: 'system',
             content: `You are a professional test data generator for forms. Generate consistent, realistic but fake data.
-                     
+
 CRITICAL RULES:
 1. Return ONLY valid JSON without any markdown formatting, code blocks, or explanations
 2. All data must be fake but realistic enough to pass validation
 3. ${options.consistentPerson ? 'Use the SAME person\'s information across all name, email, and personal fields' : 'Generate different data for each field'}
-4. ${options.targetCountry ? `Generate data specific to ${getCountryName(options.targetCountry)} with proper formats` : 'Use appropriate formats based on field context'}
-5. Ensure all related fields are consistent (e.g., email should match the person's name)
+4. ${options.targetCountry ? `Generate data for a person FROM ${getCountryName(options.targetCountry)}. Their nationality MUST be ${getCountryName(options.targetCountry)} (or the corresponding nationality like "Norwegian" for Norway). ALL country and nationality fields must match ${getCountryName(options.targetCountry)}.` : 'Use appropriate formats based on field context'}
+5. Ensure all related fields are consistent (e.g., email should match the person's name, nationality matches country)
 6. Use proper formats for each country (phone numbers, postal codes, addresses, etc.)
 7. ${options.useRealistic ? 'Create believable, professional data' : 'Use clearly fake test data like "Test User"'}
 
@@ -131,8 +131,10 @@ function buildPrompt(fields, context, options) {
   let prompt = `Generate test data for a form with ${fields.length} fields.\n\n`;
   
   if (countryName) {
-    prompt += `COUNTRY CONTEXT: Generate all data for ${countryName}. `;
-    prompt += `Use ${countryName} formats for:\n`;
+    prompt += `COUNTRY CONTEXT: Generate all data for a person from ${countryName}. `;
+    prompt += `This person should be a ${countryName} national. Use ${countryName} formats for:\n`;
+    prompt += `- Nationality: Must be "${countryName}" or the corresponding nationality (e.g., "Norwegian" for Norway)\n`;
+    prompt += `- Country fields: Must be "${countryName}"\n`;
     prompt += `- Phone numbers (proper country format)\n`;
     prompt += `- Addresses (real city names, proper postal/zip code format)\n`;
     prompt += `- State/Province names (if applicable)\n`;
@@ -204,8 +206,10 @@ function buildPrompt(fields, context, options) {
   prompt += '5. Keep related fields consistent\n';
   
   if (countryName) {
-    prompt += `6. All geographic data must be valid for ${countryName}\n`;
-    prompt += `7. Use real ${countryName} city names and valid postal codes\n`;
+    prompt += `6. The person MUST be from ${countryName} - nationality field must match\n`;
+    prompt += `7. All country/nationality fields MUST be set to ${countryName} or its nationality\n`;
+    prompt += `8. All geographic data must be valid for ${countryName}\n`;
+    prompt += `9. Use real ${countryName} city names and valid postal codes\n`;
   }
   
   prompt += '\nReturn ONLY the JSON object with field IDs as keys and generated values.';
