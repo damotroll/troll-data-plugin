@@ -385,75 +385,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Keep track of which fields are autocomplete so we can handle them separately
     const autocompleteFields = [];
 
-    data.forEach(fieldData => {
-      if (fieldData.index !== undefined && allInputs[fieldData.index]) {
-        const input = allInputs[fieldData.index];
-
-        if (fieldData.value !== undefined && fieldData.value !== null) {
-          // Check if this is an autocomplete/combobox field
-          const isAutocomplete = input.getAttribute('role') === 'combobox' ||
-                                 input.getAttribute('aria-haspopup') === 'listbox' ||
-                                 input.getAttribute('aria-autocomplete') === 'list';
-
-          console.log('[AutoFill] Field check:', {
-            index: fieldData.index,
-            value: fieldData.value,
-            role: input.getAttribute('role'),
-            ariaHaspopup: input.getAttribute('aria-haspopup'),
-            ariaAutocomplete: input.getAttribute('aria-autocomplete'),
-            isAutocomplete: isAutocomplete,
-            tagName: input.tagName
-          });
-
-          if (isAutocomplete) {
-            // Store for later processing with proper timing
-            console.log('[AutoFill] Adding to autocomplete queue:', fieldData.value);
-            autocompleteFields.push({ input, value: fieldData.value, index: autocompleteFields.length });
-          } else if (input.tagName === 'SELECT') {
-            // For standard select, try to match option value
-            const option = Array.from(input.options).find(opt =>
-              opt.value === fieldData.value ||
-              opt.textContent.trim() === fieldData.value
-            );
-            if (option) {
-              input.value = option.value;
-              input.dispatchEvent(new Event('change', { bubbles: true }));
-              filledCount++;
-            }
-          } else {
-            // Standard input field
-            input.focus();
-            input.value = fieldData.value;
-
-            // Trigger change events
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-            input.dispatchEvent(new Event('blur', { bubbles: true }));
-
-            // Add visual feedback
-            input.style.transition = 'background-color 0.3s';
-            input.style.backgroundColor = '#e8f5e9';
-            setTimeout(() => {
-              input.style.backgroundColor = '';
-            }, 1000);
-
-            filledCount++;
-          }
-        }
-      }
-    });
-
-    // Handle autocomplete fields with proper timing and the correct value from OpenAI
-    autocompleteFields.forEach(({ input, value, index }) => {
-      setTimeout(() => {
-        fillAutocompleteField(input, value);
-      }, index * 800); // Stagger to avoid conflicts
-    });
-
-    return filledCount + autocompleteFields.length;
-  }
-
-  function fillAutocompleteField(input, targetValue) {
+    // Nested function to fill autocomplete fields
+    function fillAutocompleteField(input, targetValue) {
     console.log('[AutoFill] Processing autocomplete field:', {
       label: input.closest('.MuiFormControl-root')?.querySelector('label')?.textContent,
       targetValue: targetValue,
@@ -601,6 +534,75 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 100);
       }
     }, 500); // Increased wait time for dropdown to fully render
+    }
+
+    // Process all fields
+    data.forEach(fieldData => {
+      if (fieldData.index !== undefined && allInputs[fieldData.index]) {
+        const input = allInputs[fieldData.index];
+
+        if (fieldData.value !== undefined && fieldData.value !== null) {
+          // Check if this is an autocomplete/combobox field
+          const isAutocomplete = input.getAttribute('role') === 'combobox' ||
+                                 input.getAttribute('aria-haspopup') === 'listbox' ||
+                                 input.getAttribute('aria-autocomplete') === 'list';
+
+          console.log('[AutoFill] Field check:', {
+            index: fieldData.index,
+            value: fieldData.value,
+            role: input.getAttribute('role'),
+            ariaHaspopup: input.getAttribute('aria-haspopup'),
+            ariaAutocomplete: input.getAttribute('aria-autocomplete'),
+            isAutocomplete: isAutocomplete,
+            tagName: input.tagName
+          });
+
+          if (isAutocomplete) {
+            // Store for later processing with proper timing
+            console.log('[AutoFill] Adding to autocomplete queue:', fieldData.value);
+            autocompleteFields.push({ input, value: fieldData.value, index: autocompleteFields.length });
+          } else if (input.tagName === 'SELECT') {
+            // For standard select, try to match option value
+            const option = Array.from(input.options).find(opt =>
+              opt.value === fieldData.value ||
+              opt.textContent.trim() === fieldData.value
+            );
+            if (option) {
+              input.value = option.value;
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+              filledCount++;
+            }
+          } else {
+            // Standard input field
+            input.focus();
+            input.value = fieldData.value;
+
+            // Trigger change events
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            input.dispatchEvent(new Event('blur', { bubbles: true }));
+
+            // Add visual feedback
+            input.style.transition = 'background-color 0.3s';
+            input.style.backgroundColor = '#e8f5e9';
+            setTimeout(() => {
+              input.style.backgroundColor = '';
+            }, 1000);
+
+            filledCount++;
+          }
+        }
+      }
+    });
+
+    // Handle autocomplete fields with proper timing and the correct value from OpenAI
+    autocompleteFields.forEach(({ input, value, index }) => {
+      setTimeout(() => {
+        fillAutocompleteField(input, value);
+      }, index * 800); // Stagger to avoid conflicts
+    });
+
+    return filledCount + autocompleteFields.length;
   }
 
   function showStatus(message, type) {
