@@ -134,6 +134,12 @@ function mapRandomUserToField(user, field, options) {
       return realistic ? `${user.name.last} Corporation` : 'Test Company';
     case 'website':
       return realistic ? `https://www.${user.login.username}.com` : 'https://test.com';
+    case 'ssn':
+      // Random User API provides SSN/ID for certain countries
+      if (user.id && user.id.value) {
+        return user.id.value;
+      }
+      return realistic ? '123-45-6789' : '000-00-0000';
     case 'creditCard':
       return '4111111111111111'; // Test Visa number
     case 'cvv':
@@ -271,6 +277,8 @@ function generateFallbackValue(field, options) {
       return realistic ? 'johndoe' : 'testuser';
     case 'password':
       return realistic ? 'SecurePass123!' : 'Test123!';
+    case 'ssn':
+      return realistic ? '123-45-6789' : '000-00-0000';
     case 'creditCard':
       return '4111111111111111'; // Test Visa number
     case 'cvv':
