@@ -323,7 +323,8 @@ function fillForms(data) {
   });
 
   // Handle MUI Autocomplete and similar input[role="combobox"] components
-  const autocompleteInputs = document.querySelectorAll('input[role="combobox"]');
+  // Following ARIA combobox pattern: open dropdown, wait for options, click option, dispatch events
+  const autocompleteInputs = document.querySelectorAll('input[role="combobox"], input[aria-haspopup="listbox"]');
   autocompleteInputs.forEach((input, index) => {
     setTimeout(() => {
       // Skip if already has a value (and it's not just a placeholder)
@@ -333,63 +334,79 @@ function fillForms(data) {
         return;
       }
 
-      // Find the popup button to open the dropdown (usually has aria-label="Open" or similar)
-      const container = input.closest('[class*="Autocomplete"], [class*="autocomplete"], .MuiAutocomplete-root');
-      const popupButton = container?.querySelector('button[aria-label*="Open"], button.MuiAutocomplete-popupIndicator, button[title*="Open"]');
+      // Step 1: Open the dropdown by clicking the combobox input
+      // This is the standard way to open ARIA combobox dropdowns
+      input.click();
+      input.focus();
 
-      // Click the popup button to open the dropdown
-      if (popupButton) {
-        popupButton.click();
-      } else {
-        // Fallback: click the input itself
-        input.click();
-        input.focus();
-      }
-
-      // Wait for dropdown to open
+      // Step 2: Wait for options to render (250ms as recommended)
       setTimeout(() => {
-        // Get the listbox ID from aria-controls
+        // Step 3: Find the listbox and options
         const listboxId = input.getAttribute('aria-controls');
         let listbox;
 
         if (listboxId) {
           listbox = document.getElementById(listboxId);
         } else {
-          // Fallback: look for visible listbox near the input
-          listbox = container?.querySelector('[role="listbox"]');
+          // Fallback: look for visible listbox elements
+          // Check for <ul role="listbox"> or similar structures
+          const allListboxes = document.querySelectorAll('[role="listbox"]:not([aria-hidden="true"])');
+          listbox = allListboxes[allListboxes.length - 1]; // Get most recently opened
+
+          // Also check for <option> elements in case it's a hybrid implementation
           if (!listbox) {
-            const allListboxes = document.querySelectorAll('[role="listbox"]:not([aria-hidden="true"])');
-            listbox = allListboxes[allListboxes.length - 1];
+            const optionElements = document.querySelectorAll('option');
+            if (optionElements.length > 0) {
+              listbox = optionElements[0].parentElement;
+            }
           }
         }
 
         if (listbox) {
-          const options = listbox.querySelectorAll('[role="option"]:not([aria-disabled="true"])');
+          // Find selectable options (could be [role="option"] or <option> elements)
+          let options = listbox.querySelectorAll('[role="option"]:not([aria-disabled="true"])');
+
+          // Fallback: also look for <option> elements
+          if (options.length === 0) {
+            options = listbox.querySelectorAll('option:not([disabled])');
+          }
+
           if (options.length > 0) {
             // Pick a random option (skip first if it looks like a placeholder)
             let randomIndex = Math.floor(Math.random() * options.length);
             const firstText = options[0].textContent?.toLowerCase() || '';
-            if (firstText.includes('select') || firstText.includes('choose') || firstText.includes('--') || firstText.includes('none')) {
+            if (firstText.includes('select') || firstText.includes('choose') ||
+                firstText.includes('--') || firstText.includes('none') || firstText === '') {
               randomIndex = Math.floor(Math.random() * (options.length - 1)) + 1;
             }
 
             const selectedOption = options[randomIndex];
 
-            // Trigger mousedown, mouseup, and click for proper MUI handling
-            selectedOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-            selectedOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+            // Step 4: Click the actual option element to select it
+            // Some frameworks need mousedown/mouseup, others just click
+            selectedOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+            selectedOption.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
             selectedOption.click();
 
-            // Wait a bit, then trigger events on the input to commit the selection
+            // Step 5: Immediately dispatch change and blur events on the input to commit
+            // This ensures the form framework registers the selection
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            input.dispatchEvent(new Event('blur', { bubbles: true }));
+
+            // Step 6: Verify dropdown is closed (it should close automatically after blur)
+            // Visual feedback
             setTimeout(() => {
-              input.dispatchEvent(new Event('input', { bubbles: true }));
-              input.dispatchEvent(new Event('change', { bubbles: true }));
-              input.blur();
+              if (input.value && input.value.trim() !== '') {
+                input.style.backgroundColor = '#e8f5e9';
+                setTimeout(() => {
+                  input.style.backgroundColor = '';
+                }, 500);
+              }
             }, 100);
           }
         }
-      }, 300);
-    }, index * 700); // Stagger to avoid conflicts
+      }, 250); // Wait 250ms for dropdown to render as recommended
+    }, index * 800); // Stagger to avoid conflicts between multiple dropdowns
   });
 
   // Handle custom dropdowns (common patterns)
