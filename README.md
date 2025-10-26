@@ -1,6 +1,6 @@
-# Smart Form Filler - Free Test Data Generator
+# Troll From Filler - Free Test Data Generator
 
-A Chrome/Chromium browser extension that intelligently fills forms with realistic dummy data for testing and demos using the Random User API - completely free, no API key required!
+A Chrome/Chromium browser extension that fills forms with realistic test data for development and demos using the Random User API - completely free, no API key required!
 
 ## Features
 
@@ -17,7 +17,7 @@ A Chrome/Chromium browser extension that intelligently fills forms with realisti
 
 ### Step 1: Prepare the Extension Files
 
-1. Create a new folder called `smart-form-filler`
+1. Create a new folder called `troll-data-plugin`
 2. Save all the provided files into this folder:
    - `manifest.json`
    - `popup.html`
@@ -42,7 +42,7 @@ You can use a simple colored square or download free icons from sites like [Icon
 1. Open Chrome and navigate to `chrome://extensions/`
 2. Enable "Developer mode" (toggle in top right)
 3. Click "Load unpacked"
-4. Select your `smart-form-filler` folder
+4. Select your `troll-data-plugin` folder
 5. The extension will appear in your extensions list
 
 #### For Chromium-based Browsers (Edge, Brave, Opera, Comet):
@@ -53,7 +53,7 @@ You can use a simple colored square or download free icons from sites like [Icon
    - Comet: Check browser settings for extensions
 2. Enable "Developer mode"
 3. Click "Load unpacked" or similar option
-4. Select your `smart-form-filler` folder
+4. Select your `troll-data-plugin` folder
 
 ## Setup
 
@@ -69,7 +69,7 @@ Simply install the extension and start using it immediately!
 3. Choose your filling option:
    - **"Fill Forms on This Page"**: Fills all detected forms
    - **"Fill Visible Forms Only"**: Only fills currently visible forms
-4. Watch as the forms are automatically filled with AI-generated data
+4. Watch as the forms are automatically filled with realistic test data
 
 ### Options:
 - **Target Country**: Select a specific country for data generation (US, UK, Canada, Germany, France, etc.)

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Smart Form Filler - Free Demo Data",
+  "name": "Troll From Filler - Free Test Data",
   "version": "2.0.0",
-  "description": "Intelligently fill forms with realistic dummy data for testing and demos - 100% free, no API key needed",
+  "description": "Fill forms with realistic test data for development and demos - 100% free, no API key needed",
   "permissions": [
     "activeTab",
     "storage",

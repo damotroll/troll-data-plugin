@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // Step 4: Find the option matching the target value from OpenAI
+      // Step 4: Find the option matching the target value from Random User API
       let selectedOption = null;
       let matchType = 'none';
 
@@ -546,7 +546,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    // Handle autocomplete fields with proper timing and the correct value from OpenAI
+    // Handle autocomplete fields with proper timing and the correct value from Random User API
     autocompleteFields.forEach(({ input, value, index }) => {
       setTimeout(() => {
         fillAutocompleteField(input, value);

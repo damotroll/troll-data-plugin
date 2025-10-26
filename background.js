@@ -1,4 +1,4 @@
-// background.js - Handle OpenAI API calls and data generation
+// background.js - Handle Random User API calls and data generation
 
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

@@ -313,7 +313,7 @@ function fillForms(data) {
   });
 
   // Note: Autocomplete/dropdown handling has been moved to popup.js
-  // where it has access to the OpenAI-generated values for proper field matching
+  // where it has access to the Random User API-generated values for proper field matching
 
   return filledCount;
 }
